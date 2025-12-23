@@ -5,5 +5,5 @@ defmodule Orchid.Symbiont.Handler do
     adapter: module(),
     metadata: map() | keyword() | nil
   }
-  defstruct [:name, :ref, :adapter, :metadata]
+  defstruct [:name, :ref, adapter: GenServer, metadata: %{}]
 end
