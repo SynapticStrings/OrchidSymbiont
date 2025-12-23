@@ -1,7 +1,7 @@
 defmodule Orchid.Symbiont.Handler do
   @type t :: %__MODULE__{
     name: term(),
-    ref: tuple() | pid() | atom(),
+    ref: {atom(), node()} | pid() | atom(),
     adapter: module(),
     metadata: map() | keyword() | nil
   }
