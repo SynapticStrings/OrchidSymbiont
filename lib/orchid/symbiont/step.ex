@@ -7,7 +7,7 @@ defmodule Orchid.Symbiont.Step do
       {
         CustomeStep,
         :input, :output,
-        [{Orchid.Symbiont.Step.get_step_required_mapper(), %{foo: :bar}}]
+        [{Orchid.Symbiont.Step.get_step_required_mapper(), [foo: :bar]}]
       }
   """
   @type symbiont_name :: atom()

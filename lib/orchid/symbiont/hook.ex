@@ -34,7 +34,8 @@ defmodule Orchid.Symbiont.Hook do
     if Orchid.Symbiont.Step.has_model?(symbiont_step) do
       logical_names = symbiont_step.required()
 
-      bindings = Keyword.get(ctx.step_opts, Orchid.Symbiont.Step.get_step_required_mapper(), %{}) |> Map.new()
+      binding_key = Orchid.Symbiont.Step.get_step_required_mapper()
+      bindings = Keyword.get(ctx.step_opts, binding_key, %{}) |> Map.new()
 
       handlers = Map.new(logical_names, fn logical ->
         external_name = Map.get(bindings, logical, logical)
