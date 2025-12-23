@@ -22,5 +22,9 @@ defmodule Orchid.Symbiont.Step do
   @callback run_with_model(Orchid.Step.input(), symbiont_map(), Orchid.Step.step_options()) ::
               Orchid.Step.output()
 
-  def has_model?(step), do: is_atom(step) and function_exported?(step, :run_with_model, 3)
+  def has_model?(step),
+    do:
+      is_atom(step) and
+        function_exported?(step, :required, 0) and
+        function_exported?(step, :run_with_model, 3)
 end

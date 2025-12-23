@@ -31,46 +31,45 @@ defmodule Orchid.Symbiont.Hook do
 
   def call(ctx, next_fn) do
     symbiont_step = ctx.step_implementation
-    if Orchid.Symbiont.Step.has_model?(symbiont_step) do
-      logical_names = symbiont_step.required()
 
-      binding_key = Orchid.Symbiont.Step.get_step_required_mapper()
-      bindings = Keyword.get(ctx.step_opts, binding_key, %{}) |> Map.new()
-
-      handlers = Map.new(logical_names, fn logical ->
-        external_name = Map.get(bindings, logical, logical)
-
-        # if cought error, fast failed.
-        {:ok, handler} = Orchid.Symbiont.Resolver.resolve(external_name)
-
-        {logical, handler}
-      end)
-
+    with true <- Orchid.Symbiont.Step.has_model?(symbiont_step),
+         [] = handlers <- get_headers(symbiont_step, ctx.step_opts) do
       next_fn.(%{
         ctx
         | step_implementation: Adapter,
-          step_opts: Keyword.merge(
-            ctx.step_opts,
-            [
-              # Implementation
-              {Adapter.delegate_key(), symbiont_step},
-              # Handler Map
-              {Adapter.handlers_key(), handlers}
-            ]
-          )
+          step_opts:
+            Keyword.merge(
+              ctx.step_opts,
+              [
+                # Implementation
+                {Adapter.delegate_key(), symbiont_step},
+                # Handler Map
+                {Adapter.handlers_key(), handlers}
+              ]
+            )
       })
     else
-      next_fn.(ctx)
+      false -> next_fn.(ctx)
+      {:error, error} -> error
     end
   end
 
-  def inject_handlers(ctx, mode, key \\ Adapter.handlers_key())
+  defp get_headers(symbiont_step, step_opts) do
+    logical_names = symbiont_step.required()
 
-  def inject_handlers(ctx, :recipe, key) do
-    ctx.recipe_opts |> Keyword.get(key, %{})
-  end
+    binding_key = Orchid.Symbiont.Step.get_step_required_mapper()
+    bindings = Keyword.get(step_opts, binding_key, %{}) |> Map.new()
 
-  def inject_handlers(ctx, :step_opts, key) do
-    ctx.step_opts |> Keyword.get(key, %{})
+    Enum.reduce_while(logical_names, [], fn logical, acc ->
+      external_name = Map.get(bindings, logical, logical)
+
+      case Orchid.Symbiont.Resolver.resolve(external_name) do
+        {:ok, handler} ->
+          {:cont, [{logical, handler} | acc]}
+
+        {:error, error} ->
+          {:halt, {:error, error}}
+      end
+    end)
   end
 end

@@ -25,10 +25,12 @@ defmodule Orchid.Symbiont.Resolver do
 
         # 假设用户的 start_link 接受 [name: ...] 参数
         # 这里可能需要根据你的实际 GenServer 规范调整
+        args = Keyword.put(args, :name, via_name)
+
         child_spec = %{
           id: name,
-          start: {mod, :start_link, [args ++ [name: via_name]]},
-          restart: :temporary # 挂了不自动重启，等待下一次 resolve 触发
+          start: {mod, :start_link, args},
+          restart: :temporary # 等待下一次 resolve 触发
         }
 
         case DynamicSupervisor.start_child(Orchid.Symbiont.DynamicSupervisor, child_spec) do
