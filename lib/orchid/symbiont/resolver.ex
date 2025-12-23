@@ -21,7 +21,7 @@ defmodule Orchid.Symbiont.Resolver do
       {mod, args} ->
         # 3. 构造 Child Spec
         # 关键点：强制加上 name: {:via, ...} 使得进程启动时自动注册进 Registry
-        via_name = {:via, Registry, {Registry, name}}
+        via_name = {:via, Registry, {Orchid.Symbiont.Registry, name}}
 
         # 假设用户的 start_link 接受 [name: ...] 参数
         # 这里可能需要根据你的实际 GenServer 规范调整
