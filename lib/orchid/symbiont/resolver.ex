@@ -29,7 +29,7 @@ defmodule Orchid.Symbiont.Resolver do
 
         child_spec = %{
           id: name,
-          start: {mod, :start_link, args},
+          start: {mod, :start_link, [List.wrap(args)]},
           restart: :temporary # 等待下一次 resolve 触发
         }
 
