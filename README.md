@@ -57,9 +57,8 @@ defmodule MyWorkflow.CalculateStep do
   def run_with_model(input, handlers, _opts) do
     # Get the resolved service reference
     worker = handlers[:heavy_calculator] 
-    
-    # Call the GenServer
-    result = GenServer.call(worker.ref, {:compute, input})
+
+    result = Orchid.Symbiont.call(worker, {:compute, input})
     
     {:ok, result}
   end
