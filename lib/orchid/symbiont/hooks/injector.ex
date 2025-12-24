@@ -1,4 +1,4 @@
-defmodule Orchid.Symbiont.Hook do
+defmodule Orchid.Symbiont.Hooks.Injector do
   @behaviour Orchid.Runner.Hook
 
   defmodule Adapter do

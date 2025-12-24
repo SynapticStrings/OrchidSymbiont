@@ -12,7 +12,9 @@ defmodule Orchid.Symbiont.Runtime do
 
       {DynamicSupervisor, name: Orchid.Symbiont.DynamicSupervisor, strategy: :one_for_one},
 
-      Orchid.Symbiont.Catalog
+      Orchid.Symbiont.Catalog,
+
+      {Task.Supervisor, name: Orchid.Symbiont.Preloader}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

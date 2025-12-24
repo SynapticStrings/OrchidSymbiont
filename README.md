@@ -67,12 +67,12 @@ end
 
 ### 3. Run with Hook
 
-Inject the `Orchid.Symbiont.Hook` into your recipe's step configuration.
+Inject the `Orchid.Symbiont.Hooks.Injector` into your recipe's step configuration.
 
 ```elixir
 step_opts = [
   # This hook activates the Symbiont logic
-  extra_hooks_stack: [Orchid.Symbiont.Hook] 
+  extra_hooks_stack: [Orchid.Symbiont.Hooks.Injector] 
 ]
 
 steps = [
@@ -86,7 +86,7 @@ Orchid.run(recipe, inputs)
 
 ## How it works
 
-1.  **Intercept**: The `Orchid.Symbiont.Hook` pauses the step execution.
+1.  **Intercept**: The `Orchid.Symbiont.Hooks.Injector` pauses the step execution.
 2.  **Check**: It reads the `required()` list from your step.
 3.  **Resolve**: 
   * Checks `Orchid.Symbiont.Registry` if the service is alive.
