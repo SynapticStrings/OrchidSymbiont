@@ -33,8 +33,8 @@ defmodule Orchid.Symbiont.Hooks.Injector do
     symbiont_step = ctx.step_implementation
 
     with true <- Orchid.Symbiont.Step.has_model?(symbiont_step),
-         [] = handlers <- get_headers(symbiont_step, ctx.step_opts) do
-      next_fn.(%{
+         handlers when is_map(handlers) <- get_headers(symbiont_step, ctx.step_opts) do
+      updated_ctx = %{
         ctx
         | step_implementation: Adapter,
           step_opts:
@@ -47,10 +47,12 @@ defmodule Orchid.Symbiont.Hooks.Injector do
                 {Adapter.handlers_key(), handlers}
               ]
             )
-      })
+      }
+
+      next_fn.(updated_ctx)
     else
       false -> next_fn.(ctx)
-      {:error, error} -> error
+      {:error, error} -> {:error, error}
     end
   end
 
@@ -60,12 +62,12 @@ defmodule Orchid.Symbiont.Hooks.Injector do
     binding_key = Orchid.Symbiont.Step.get_step_required_mapper()
     bindings = Keyword.get(step_opts, binding_key, %{}) |> Map.new()
 
-    Enum.reduce_while(logical_names, [], fn logical, acc ->
+    Enum.reduce_while(logical_names, %{}, fn logical, acc ->
       external_name = Map.get(bindings, logical, logical)
 
       case Orchid.Symbiont.Resolver.resolve(external_name) do
         {:ok, handler} ->
-          {:cont, [{logical, handler} | acc]}
+          {:cont, Map.put(acc, logical, handler)}
 
         {:error, error} ->
           {:halt, {:error, error}}
