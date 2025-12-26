@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Workers configured with a `:ttl` option will automatically terminate after a period of inactivity to free up resources.
   - The Wrapper ensures request forwarding is transparent and handles timeouts (`:infinity` internally) correctly to support long-running tasks.
 - **Registry & Catalog**:
-  - `Orchid.Symbiont.register/3`: API to define blueprints for services, supporting both standard startup and TTL-enabled modes.
+  - `Orchid.Symbiont.register/2`: API to define blueprints for services, supporting both standard startup and TTL-enabled modes.
   - Built-in `Registry` for name resolution and idempotency check (preventing duplicate startups).
 - **Integration**:
   - Provides `Orchid.Symbiont.Step` behavior requiring `required/0` (dependencies) and `run_with_model/3` (execution logic).
