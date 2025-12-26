@@ -20,7 +20,7 @@ Add to your `mix.exs`:
 ```elixir
 def deps do
   [
-    {:orchid_symbiont, git: "https://github.com/SynapticStrings/OrchidSymbiont.git"}
+    {:orchid_symbiont, "~> 0.1.0"}
   ]
 end
 ```
