@@ -1,10 +1,14 @@
 defmodule Orchid.Symbiont do
-  defdelegate register(name, mod_and_args), to: Orchid.Symbiont.Catalog
+  alias Orchid.Symbiont.{Step, Handler, Preloader, Resolver, Catalog}
 
+  @spec register(Step.symbiont_name(), {module(), any()}) :: :ok
+  defdelegate register(name, mod_and_args), to: Catalog
+
+  @spec preload([Step.symbiont_name()]) :: :ok
   def preload(names) when is_list(names) do
     Enum.each(names, fn name ->
-      Task.Supervisor.start_child(Orchid.Symbiont.Preloader, fn ->
-        case Orchid.Symbiont.Resolver.resolve(name) do
+      Task.Supervisor.start_child(Preloader, fn ->
+        case Resolver.resolve(name) do
           {:ok, _} ->
             :ok
 
@@ -19,7 +23,8 @@ defmodule Orchid.Symbiont do
     end)
   end
 
-  def call(%Orchid.Symbiont.Handler{ref: pid, adapter: adapter}, request, timeout \\ 5000) do
+  @spec call(Handler.t(), term(), timeout()) :: any()
+  def call(%Handler{ref: pid, adapter: adapter}, request, timeout \\ 5000) do
     adapter.call(pid, request, timeout)
   end
 end

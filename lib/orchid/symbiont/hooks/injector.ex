@@ -1,4 +1,5 @@
 defmodule Orchid.Symbiont.Hooks.Injector do
+  alias Orchid.Symbiont.Step, as: SymbiontStep
   @behaviour Orchid.Runner.Hook
 
   defmodule Adapter do
@@ -29,10 +30,12 @@ defmodule Orchid.Symbiont.Hooks.Injector do
     end
   end
 
+  @spec call(Orchid.Runner.Context.t(), Orchid.Runner.Hook.next_fn()) ::
+          {:ok, Orchid.Step.output()} | {:error, term()}
   def call(ctx, next_fn) do
     symbiont_step = ctx.step_implementation
 
-    with true <- Orchid.Symbiont.Step.has_model?(symbiont_step),
+    with true <- SymbiontStep.has_model?(symbiont_step),
          handlers when is_map(handlers) <- get_headers(symbiont_step, ctx.step_opts) do
       updated_ctx = %{
         ctx
@@ -59,7 +62,7 @@ defmodule Orchid.Symbiont.Hooks.Injector do
   defp get_headers(symbiont_step, step_opts) do
     logical_names = symbiont_step.required()
 
-    binding_key = Orchid.Symbiont.Step.get_step_required_mapper()
+    binding_key = SymbiontStep.get_step_required_mapper()
     bindings = Keyword.get(step_opts, binding_key, %{}) |> Map.new()
 
     Enum.reduce_while(logical_names, %{}, fn logical, acc ->
