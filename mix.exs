@@ -56,7 +56,7 @@ defmodule OrchidSymbiont.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:orchid, "~> 0.4"},
+      {:orchid, "~> 0.5"},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false}
     ]
   end
