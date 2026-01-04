@@ -6,7 +6,7 @@ defmodule Orchid.Symbiont do
 
   @spec preload([Step.symbiont_name()] | Step.symbiont_name()) :: :ok
   def preload(names) when is_list(names), do: Enum.each(names, &do_preload/1)
-  def preload(name) when !is_list(name), do: do_preload(name)
+  def preload(name) when not is_list(name), do: do_preload(name)
 
   defp do_preload(name) do
     Task.Supervisor.start_child(Preloader, fn ->
@@ -29,6 +29,6 @@ defmodule Orchid.Symbiont do
   """
   @spec call(Handler.t(), term(), timeout()) :: any()
   def call(%Handler{ref: pid, adapter: adapter}, request, timeout \\ 5000) do
-    apply(adapter, :call, [pid, request, timeou])
+    apply(adapter, :call, [pid, request, timeout])
   end
 end
