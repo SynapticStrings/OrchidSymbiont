@@ -62,7 +62,7 @@ defmodule Orchid.Symbiont.Hooks.Injector do
   defp get_headers(symbiont_step, step_opts) do
     logical_names = symbiont_step.required()
 
-    binding_key = SymbiontStep.get_step_required_mapper()
+    binding_key = SymbiontStep.get_required()
     bindings = Keyword.get(step_opts, binding_key, %{}) |> Map.new()
 
     Enum.reduce_while(logical_names, %{}, fn logical, acc ->

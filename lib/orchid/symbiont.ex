@@ -4,27 +4,31 @@ defmodule Orchid.Symbiont do
   @spec register(Step.symbiont_name(), {module(), any()}) :: :ok
   defdelegate register(name, mod_and_args), to: Catalog
 
-  @spec preload([Step.symbiont_name()]) :: :ok
-  def preload(names) when is_list(names) do
-    Enum.each(names, fn name ->
-      Task.Supervisor.start_child(Preloader, fn ->
-        case Resolver.resolve(name) do
-          {:ok, _} ->
-            :ok
+  @spec preload([Step.symbiont_name()] | Step.symbiont_name()) :: :ok
+  def preload(names) when is_list(names), do: Enum.each(names, &do_preload/1)
+  def preload(name) when !is_list(name), do: do_preload(name)
 
-          {:error, reason} ->
-            require Logger
+  defp do_preload(name) do
+    Task.Supervisor.start_child(Preloader, fn ->
+      case Resolver.resolve(name) do
+        {:ok, _} ->
+          :ok
 
-            Logger.warning(
-              "[OrchidSymbiont] Preload failed for #{inspect(name)}: #{inspect(reason)}"
-            )
-        end
-      end)
+        {:error, reason} ->
+          require Logger
+
+          Logger.warning(
+            "[OrchidSymbiont] Preload failed for #{inspect(name)}: #{inspect(reason)}"
+          )
+      end
     end)
   end
 
+  @doc """
+  Sends a request to the symbiont handler and waits for a response.
+  """
   @spec call(Handler.t(), term(), timeout()) :: any()
   def call(%Handler{ref: pid, adapter: adapter}, request, timeout \\ 5000) do
-    adapter.call(pid, request, timeout)
+    apply(adapter, :call, [pid, request, timeou])
   end
 end
