@@ -53,6 +53,16 @@ defmodule Orchid.Symbiont.Hooks.Injector do
       }
 
       next_fn.(updated_ctx)
+      # TODO: If service is transient, send close signal.
+      # Enum.map(handlers, fn handler -> ... end) # Required add field in handler.
+      # |> Enum.filter(&transient?/1)
+      # |> Enum.map(&terminate_service/1)
+      # Question: how to ensure it's the last one that can be terminated without side effect?
+      # use `:transient` and `:one_time` options when defined symbiont
+      # one end at hook, one end at operons
+      # How about handle stream(e.g. large service that runs only once
+      #   BUT there's a lot of input required manipulated)?
+      # => Use OTP, my kid.
     else
       false -> next_fn.(ctx)
       {:error, error} -> {:error, error}
