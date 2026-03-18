@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-01-02
+
+### Changed
+- **Breaking**: Renamed `Orchid.Symbiont.Step.get_required/0` with old name called `get_step_required_mapper/0` for shorter and cleaner API usage.
+- `Orchid.Symbiont.call/3` now uses `apply/3` for dynamic module invocation.
+
+### Added
+- `Orchid.Symbiont.preload/1` now accepts a single symbiont name in addition to a list of names.
+
 ## [0.1.2] - 2026-01-02
 
 ### Dependencies
