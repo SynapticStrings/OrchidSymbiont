@@ -36,7 +36,7 @@ defmodule Orchid.Symbiont.Hooks.Injector do
     symbiont_step = ctx.step_implementation
 
     with true <- SymbiontStep.has_model?(symbiont_step),
-         handlers when is_map(handlers) <- get_headers(symbiont_step, ctx.step_opts) do
+         handlers when is_map(handlers) <- get_headers(symbiont_step, ctx.step_opts, ctx.workflow_ctx) do
       updated_ctx = %{
         ctx
         | step_implementation: Adapter,
@@ -59,21 +59,22 @@ defmodule Orchid.Symbiont.Hooks.Injector do
     end
   end
 
-  defp get_headers(symbiont_step, step_opts) do
+  defp get_headers(symbiont_step, step_opts, workflow_ctx) do
     logical_names = symbiont_step.required()
+    binding_key = SymbiontStep.get_required() # :symbiont_mapper
 
-    binding_key = SymbiontStep.get_required()
-    bindings = Keyword.get(step_opts, binding_key, %{}) |> Map.new()
+    global_bindings = Orchid.WorkflowCtx.get_baggage(workflow_ctx, binding_key, %{}) |> Map.new()
+
+    local_bindings = Keyword.get(step_opts, binding_key, %{}) |> Map.new()
+
+    bindings = Map.merge(global_bindings, local_bindings)
 
     Enum.reduce_while(logical_names, %{}, fn logical, acc ->
       external_name = Map.get(bindings, logical, logical)
 
       case Orchid.Symbiont.Resolver.resolve(external_name) do
-        {:ok, handler} ->
-          {:cont, Map.put(acc, logical, handler)}
-
-        {:error, error} ->
-          {:halt, {:error, error}}
+        {:ok, handler} -> {:cont, Map.put(acc, logical, handler)}
+        {:error, error} -> {:halt, {:error, error}}
       end
     end)
   end
