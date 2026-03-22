@@ -85,6 +85,20 @@ recipe = Orchid.Recipe.new(steps, name: :smart_calculation)
 Orchid.run(recipe, inputs)
 ```
 
+### 4. Global Mapping (New in 0.1.4)
+
+Instead of defining mappings for every step, you can set a global mapping in the workflow context:
+
+```elixir
+# In your workflow trigger/runner
+workflow_ctx = Orchid.WorkflowCtx.new()
+  |> Orchid.WorkflowCtx.put_baggage(:symbiont_mapper, [
+    heavy_calculator: :my_specific_worker_process
+  ])
+
+Orchid.run(recipe, inputs, workflow_ctx: workflow_ctx)
+```
+
 ## How it works
 
 1.  **Intercept**: The `Orchid.Symbiont.Hooks.Injector` pauses the step execution.

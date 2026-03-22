@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-01-03
+
+### Added
+- **Global Mapping Support**: `Orchid.Symbiont.Hooks.Injector` now supports resolving symbiont aliases from the `Orchid.WorkflowCtx` baggage. 
+- **Hierarchical Resolution**: Symbiont mappings are now merged from two levels:
+    1. **Global**: Set via `Orchid.WorkflowCtx.put_baggage(ctx, :symbiont_mapper, [...])`.
+    2. **Local**: Set via `step_opts`. 
+    *Note: Local step-specific mappings will override global mappings if both define the same logical name.*
+
+### Fixed
+- Internal `get_headers` logic in the Injector hook to properly handle the workflow context.
+
 ## [0.1.3] - 2026-01-02
 
 ### Changed
