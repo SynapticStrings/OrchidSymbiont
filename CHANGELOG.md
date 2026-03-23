@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-01-04
+
+### Added
+- **Session Isolation (Multi-Tenancy)**: Introduced the ability to run completely isolated sandboxes of Symbiont processes using `session_id`. Perfect for concurrent workflows or multi-tenant SaaS architectures without PID conflicts.
+- **Dynamic Supervision Trees**: `Orchid.Symbiont.Runtime` can now be started multiple times under different namespaces by passing `[session_id: :your_session_name]`. Each session gets its own isolated `Registry`, `DynamicSupervisor`, `Catalog`, and `Preloader`.
+- **Smart Catalog Fallback**: Added a hierarchical lookup mechanism in `Orchid.Symbiont.Catalog`. If a blueprint is not found in a session-specific catalog, it will automatically fall back to the global catalog. *(Write blueprints once globally, run instances locally!)*
+- **New Naming Module**: Added `Orchid.Symbiont.Naming` to handle dynamic process registration routing transparently.
+
+### Changed
+- **Injector Hook Upgraded**: `Orchid.Symbiont.Hooks.Injector` now automatically extracts `:session_id` from the `Orchid.WorkflowCtx` baggage and routes the process resolution to the corresponding session's registry.
+- **API Enhancements**: `Orchid.Symbiont.register` and `Orchid.Symbiont.Resolver.resolve` now accept an optional `session_id` parameter. *(Fully backward compatible with global singleton usage)*.
+- **Dependencies Bump**: Updated `orchid` to `0.5.6`, `telemetry` to `1.4.1`, and `ex_doc` to `0.40.1`.
+
 ## [0.1.4] - 2026-01-03
 
 ### Added

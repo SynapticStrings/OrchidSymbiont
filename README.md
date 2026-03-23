@@ -12,6 +12,7 @@ OrchidSymbiont acts as a sidecar for your Orchid workflows. It allows individual
 * **Automatic Registry**: Handles process registration, lookup, and idempotency (won't start twice).
 * **Seamless Injection**: Injects process references(PID) directly into the step logic via a specialized Hook.
 * **Blueprint Catalog**: Decouple service implementation from step definition.
+* **Session Isolation (Multi-Tenancy)** *(New in 0.2.0)*: Run completely isolated sandboxes of your services for different tenants or concurrent workflows.
 
 ## Installation
 
@@ -20,19 +21,19 @@ Add to your `mix.exs`:
 ```elixir
 def deps do
   [
-    {:orchid, "~> 0.5"}
-    {:orchid_symbiont, "~> 0.1.2"}
+    {:orchid, "~> 0.5"},
+    {:orchid_symbiont, "~> 0.2.0"}
   ]
 end
 ```
 
-Ensure `Orchid.Symbiont.Application` is started in your supervision tree (usually handled automatically by Mix).
+Ensure `Orchid.Symbiont.Application` is started in your supervision tree (handled automatically for the global default namespace).
 
 ## Usage
 
-### 1. Register Symbionts
+### 1. Register Symbionts (Global)
 
-Tell Symbiont how to start your service. You usually do this in your application startup.
+Tell Symbiont how to start your service.
 
 ```elixir
 # Register a logical name to a GenServer spec
@@ -46,14 +47,11 @@ Implement the `Orchid.Symbiont.Step` behaviour. Note that we use `run_with_model
 
 ```elixir
 defmodule MyWorkflow.CalculateStep do
-  # Use the behaviour
   @behaviour Orchid.Symbiont.Step
 
-  # 1. Declare what you need
   @impl true
   def required, do: [:heavy_calculator]
 
-  # 2. Use it (handlers contains the PIDs)
   @impl true
   def run_with_model(input, handlers, _opts) do
     # Get the resolved service reference
@@ -76,34 +74,61 @@ step_opts = [
   extra_hooks_stack: [Orchid.Symbiont.Hooks.Injector] 
 ]
 
-steps = [
-  {MyWorkflow.CalculateStep, :input_data, :output_result, step_opts}
-]
-
-recipe = Orchid.Recipe.new(steps, name: :smart_calculation)
+# ... define steps and recipe ...
 
 Orchid.run(recipe, inputs)
 ```
 
-### 4. Global Mapping (New in 0.1.4)
+---
 
-Instead of defining mappings for every step, you can set a global mapping in the workflow context:
+## 🚀 Advanced: Session Isolation (New in 0.2.0)
+
+If you are building a SaaS application or need completely isolated environments for different workflows, you can use **Sessions**. 
+
+A Session creates a dedicated, dynamically named `Registry`, `DynamicSupervisor`, and `Catalog`. Processes running in `:session_a` cannot see or conflict with processes in `:session_b`, even if they share the same logical names!
+
+### 1. Start a Session Runtime
+
+You must start a Runtime for your specific session in your application's supervision tree (or dynamically):
 
 ```elixir
-# In your workflow trigger/runner
+# Start an isolated environment for a specific project/tenant
+children = [
+  {Orchid.Symbiont.Runtime, session_id: :project_a_session}
+]
+Supervisor.start_link(children, strategy: :one_for_one)
+```
+
+### 2. Register for a specific Session
+
+You can register blueprints globally (without a session ID) or specifically for a session. 
+*Note: If a session cannot find a blueprint in its own catalog, it will smartly fall back to the global catalog!*
+
+```elixir
+# Register specifically for :project_a_session
+Orchid.Symbiont.register(:project_a_session, :heavy_calculator, {MyCustomWorker, []})
+```
+
+### 3. Run the Workflow in a Session
+
+To tell the Symbiont Injector Hook to use a specific session, simply pass the `session_id` into the Orchid `WorkflowCtx` baggage:
+
+```elixir
 workflow_ctx = Orchid.WorkflowCtx.new()
-  |> Orchid.WorkflowCtx.put_baggage(:symbiont_mapper, [
-    heavy_calculator: :my_specific_worker_process
-  ])
+  |> Orchid.WorkflowCtx.put_baggage(:session_id, :project_a_session) # <-- Tell Symbiont to use this sandbox
 
 Orchid.run(recipe, inputs, workflow_ctx: workflow_ctx)
 ```
 
+That's it! Symbiont will now automatically resolve and start processes under the isolated `:project_a_session` supervision tree.
+
+---
+
 ## How it works
 
 1.  **Intercept**: The `Orchid.Symbiont.Hooks.Injector` pauses the step execution.
-2.  **Check**: It reads the `required()` list from your step.
+2.  **Check**: It reads the `required()` list from your step and looks for a `:session_id` in the workflow baggage.
 3.  **Resolve**: 
-  * Checks `Orchid.Symbiont.Registry` if the service is alive.
-  * If not, it looks up the blueprint in the **Catalog** and starts it under a `DynamicSupervisor`.
+  * Uses the `Naming` module to route to the correct `Registry` and `Catalog` based on the session ID.
+  * Checks if the service is alive. If not, looks up the blueprint and starts it under the isolated `DynamicSupervisor`.
 4.  **Inject**: The `PID` is wrapped in a `Handler` struct and passed to `run_with_model`.
