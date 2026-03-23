@@ -7,6 +7,8 @@ defmodule Orchid.Symbiont.Application do
       {Registry, keys: :unique, name: Orchid.Symbiont.Registry},
       Orchid.Symbiont.Catalog,
       {Orchid.Symbiont.Runtime, session_id: nil},
+      # TODO: Add a `strict_mode`
+      # If ture, not fallback to global mode.
       {Task.Supervisor, name: Orchid.Symbiont.Preloader},
     ]
 
