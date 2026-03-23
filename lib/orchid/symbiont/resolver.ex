@@ -2,18 +2,16 @@ defmodule Orchid.Symbiont.Resolver do
   alias Orchid.Symbiont.{Catalog, Handler, Naming}
 
   def resolve(session_id \\ nil, name) do
-    reg_name = Naming.registry(session_id)
-
-    case Registry.lookup(reg_name, name) do
+    case Registry.lookup(Orchid.Symbiont.Registry, {session_id, name}) do
       [{pid, _val}] ->
         {:ok, %Handler{name: name, ref: pid}}
 
       [] ->
-        start_symbiont(session_id, name, reg_name)
+        start_symbiont(session_id, name, Orchid.Symbiont.Registry)
     end
   end
 
-  defp start_symbiont(session_id, name, reg_name) do
+  defp start_symbiont(session_id, name, Orchid.Symbiont.Registry) do
     case Catalog.lookup(session_id, name) do
       nil ->
         {:error, {:unknown_symbiont, name}}
@@ -21,7 +19,7 @@ defmodule Orchid.Symbiont.Resolver do
       {mod, args} ->
         {ttl, worker_args} = Keyword.pop(args, :ttl)
 
-        via_name = {:via, Registry, {reg_name, name}}
+        via_name = {:via, Registry, {Orchid.Symbiont.Registry, {session_id, name}}}
 
         child_spec =
           if ttl do

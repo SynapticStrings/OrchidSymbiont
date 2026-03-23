@@ -1,9 +1,6 @@
 defmodule Orchid.Symbiont.Test do
   use ExUnit.Case, async: false
 
-  # 引入我们刚才写的 Naming 模块，方便在测试里查动态名字
-  alias Orchid.Symbiont.Naming
-
   defmodule MockWorker do
     use GenServer
 
@@ -41,14 +38,12 @@ defmodule Orchid.Symbiont.Test do
   # 测试环境初始化
   # ==========================================
   setup context do
-    # 1. 使用当前测试的名称生成独一无二的 session_id
-    session_id = :"session_#{context.test}"
+    Orchid.Symbiont.Catalog.clear()
 
-    # 2. 将专属的 Symbiont.Runtime 挂载到当前测试的监控树下
-    # 测试结束后，ExUnit 会自动清理这棵树，不会残留进程
+    session_id = "session_#{context.test}"
+
     start_supervised!({Orchid.Symbiont.Runtime, session_id: session_id})
 
-    # 将 session_id 传递给具体的 test 块
     %{session_id: session_id}
   end
 
@@ -117,8 +112,7 @@ defmodule Orchid.Symbiont.Test do
     refute Process.alive?(pid)
 
     # 获取动态的 Registry 名字并断言
-    dynamic_registry_name = Naming.registry(session_id)
-    assert [] == Registry.lookup(dynamic_registry_name, :fast_worker)
+    assert [] == Registry.lookup(Orchid.Symbiont.Registry, {session_id, :fast_worker})
 
     {:ok, new_handler} = Orchid.Symbiont.Resolver.resolve(session_id, :fast_worker)
     assert new_handler.ref != pid
@@ -128,8 +122,8 @@ defmodule Orchid.Symbiont.Test do
   # 【新增】核心测试：多租户/沙盒隔离测试
   # ==========================================
   test "sessions are completely isolated" do
-    session_a = :project_a_session
-    session_b = :project_b_session
+    session_a = "project_a_session"
+    session_b = "project_b_session"
 
     # 手动拉起两个完全隔离的引擎运行时
     start_supervised!(Supervisor.child_spec({Orchid.Symbiont.Runtime, session_id: session_a}, id: session_a))
@@ -143,11 +137,9 @@ defmodule Orchid.Symbiont.Test do
     assert {:error, {:unknown_symbiont, :shared_name_worker}} ==
              Orchid.Symbiont.Resolver.resolve(session_b, :shared_name_worker)
 
-    # 3. 在 Session B 也注册一个同名的 Worker，并启动它
     :ok = Orchid.Symbiont.register(session_b, :shared_name_worker, {MockWorker, []})
     {:ok, handler_b} = Orchid.Symbiont.Resolver.resolve(session_b, :shared_name_worker)
 
-    # 4. 终极断言：它们虽然名字一样，但由于位于不同的 Session 树下，它们的 PID 绝对不同！
     assert handler_a.ref != handler_b.ref
     assert Process.alive?(handler_a.ref)
     assert Process.alive?(handler_b.ref)

@@ -1,26 +1,32 @@
 defmodule Orchid.Symbiont.Catalog do
   use GenServer
-  alias Orchid.Symbiont.Naming
 
-  def start_link(opts) do
-    name = Keyword.fetch!(opts, :name)
-    GenServer.start_link(__MODULE__, %{}, name: name)
+  def start_link(_opts) do
+    GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
   end
 
-  def register(session_id \\ nil, name, {mod, args}) when is_atom(name) do
-    GenServer.call(Naming.catalog(session_id), {:register, name, {mod, args}})
+  def register(name, {mod, args}) do
+    GenServer.call(__MODULE__, {:register, name, {mod, args}})
   end
 
-  def lookup(nil, name) do
-    GenServer.call(Naming.catalog(nil), {:lookup, name})
+  def lookup(name) do
+    GenServer.call(__MODULE__, {:lookup, name})
   end
 
   def lookup(session_id, name) when not is_nil(session_id) do
-    GenServer.call(Naming.catalog(session_id), {:lookup, name})
+    GenServer.call(__MODULE__, {:lookup, {session_id, name}})
     |> case do
-      nil -> GenServer.call(Naming.catalog(nil), {:lookup, name})
+      nil -> GenServer.call(__MODULE__, {:lookup, name})
       res -> res
     end
+  end
+
+  def clear_session(session_id) do
+    GenServer.cast(__MODULE__, {:clear, session_id})
+  end
+
+  def clear do
+    GenServer.cast(__MODULE__, :clear_all)
   end
 
   @impl true
@@ -34,5 +40,15 @@ defmodule Orchid.Symbiont.Catalog do
   @impl true
   def handle_call({:lookup, name}, _from, state) do
     {:reply, Map.get(state, name), state}
+  end
+
+  @impl true
+  def handle_cast({:clear, session}, state) when not is_tuple(session) do
+    {:noreply, Map.reject(state, fn {{session_id, _logical}, _v} -> session_id == session end)}
+  end
+
+  @impl true
+  def handle_cast(:clear_all, _state) do
+    {:noreply, %{}}
   end
 end

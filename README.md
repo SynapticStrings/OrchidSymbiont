@@ -22,7 +22,7 @@ Add to your `mix.exs`:
 def deps do
   [
     {:orchid, "~> 0.5"},
-    {:orchid_symbiont, "~> 0.2.0"}
+    {:orchid_symbiont, "~> 0.2"}
   ]
 end
 ```
@@ -94,7 +94,7 @@ You must start a Runtime for your specific session in your application's supervi
 ```elixir
 # Start an isolated environment for a specific project/tenant
 children = [
-  {Orchid.Symbiont.Runtime, session_id: :project_a_session}
+  {Orchid.Symbiont.Runtime, session_id: "project_a_session"}
 ]
 Supervisor.start_link(children, strategy: :one_for_one)
 ```
@@ -105,8 +105,8 @@ You can register blueprints globally (without a session ID) or specifically for 
 *Note: If a session cannot find a blueprint in its own catalog, it will smartly fall back to the global catalog!*
 
 ```elixir
-# Register specifically for :project_a_session
-Orchid.Symbiont.register(:project_a_session, :heavy_calculator, {MyCustomWorker, []})
+# Register specifically for project_a_session
+Orchid.Symbiont.register("project_a_session", :heavy_calculator, {MyCustomWorker, []})
 ```
 
 ### 3. Run the Workflow in a Session
@@ -115,12 +115,12 @@ To tell the Symbiont Injector Hook to use a specific session, simply pass the `s
 
 ```elixir
 workflow_ctx = Orchid.WorkflowCtx.new()
-  |> Orchid.WorkflowCtx.put_baggage(:session_id, :project_a_session) # <-- Tell Symbiont to use this sandbox
+  |> Orchid.WorkflowCtx.put_baggage(:session_id, "project_a_session") # <-- Tell Symbiont to use this sandbox
 
 Orchid.run(recipe, inputs, workflow_ctx: workflow_ctx)
 ```
 
-That's it! Symbiont will now automatically resolve and start processes under the isolated `:project_a_session` supervision tree.
+That's it! Symbiont will now automatically resolve and start processes under the isolated `"project_a_session"` supervision tree.
 
 ---
 
