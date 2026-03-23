@@ -1,16 +1,18 @@
 defmodule Orchid.Symbiont do
-  alias Orchid.Symbiont.{Step, Handler, Preloader, Resolver, Catalog}
+  alias Orchid.Symbiont.{Step, Handler, Naming, Resolver, Catalog}
 
   @spec register(Step.symbiont_name(), {module(), any()}) :: :ok
-  defdelegate register(name, mod_and_args), to: Catalog
+  def register(name, mod_and_args), do: Catalog.register(nil, name, mod_and_args)
+  @spec register(atom(), Step.symbiont_name(), {module(), any()}) :: :ok
+  def register(session_id, name, mod_and_args), do: Catalog.register(session_id, name, mod_and_args)
 
   @spec preload([Step.symbiont_name()] | Step.symbiont_name()) :: :ok
-  def preload(names) when is_list(names), do: Enum.each(names, &do_preload/1)
-  def preload(name) when not is_list(name), do: do_preload(name)
+  def preload(names) when is_list(names), do: Enum.each(names, &do_preload(nil, &1))
+  def preload(name) when not is_list(name), do: do_preload(nil, name)
 
-  defp do_preload(name) do
-    Task.Supervisor.start_child(Preloader, fn ->
-      case Resolver.resolve(name) do
+  defp do_preload(session_id, name) do
+    Task.Supervisor.start_child(Naming.preloader(session_id), fn ->
+      case Resolver.resolve(session_id, name) do
         {:ok, _} ->
           :ok
 

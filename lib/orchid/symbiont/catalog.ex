@@ -1,16 +1,26 @@
 defmodule Orchid.Symbiont.Catalog do
   use GenServer
+  alias Orchid.Symbiont.Naming
 
-  def start_link(_) do
-    GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+  def start_link(opts) do
+    name = Keyword.fetch!(opts, :name)
+    GenServer.start_link(__MODULE__, %{}, name: name)
   end
 
-  def register(name, {mod, args}) when is_atom(name) do
-    GenServer.call(__MODULE__, {:register, name, {mod, args}})
+  def register(session_id \\ nil, name, {mod, args}) when is_atom(name) do
+    GenServer.call(Naming.catalog(session_id), {:register, name, {mod, args}})
   end
 
-  def lookup(name) do
-    GenServer.call(__MODULE__, {:lookup, name})
+  def lookup(nil, name) do
+    GenServer.call(Naming.catalog(nil), {:lookup, name})
+  end
+
+  def lookup(session_id, name) when not is_nil(session_id) do
+    GenServer.call(Naming.catalog(session_id), {:lookup, name})
+    |> case do
+      nil -> GenServer.call(Naming.catalog(nil), {:lookup, name})
+      res -> res
+    end
   end
 
   @impl true
