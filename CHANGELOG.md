@@ -7,7 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.1]
 
-*Refactored Session ID to support Binary (Strings). Resolved Atom exhaustion vulnerabilities and implemented a unified global registry with compound keys for robust multi-tenancy.*
+### Fixed
+- **Atom Exhaustion Vulnerability**: Resolved a critical memory leak issue where dynamic session IDs (atoms) were never garbage collected, potentially causing VM crashes in long-running multi-tenant applications.
+
+### Changed
+- **Session ID Type**: Changed `session_id` from `atom()` to `binary()` (String). Example: `:project_a` → `"project_a"`.
+- **Unified Registry Architecture**: Replaced per-session Registry/Catalog/Preloader processes with a single global Registry using compound keys `{session_id, name}`. This significantly reduces process overhead for high-session-count scenarios.
+- **Runtime Implementation**: `Orchid.Symbiont.Runtime` now uses `DynamicSupervisor` directly instead of wrapping it in a `Supervisor`.
+- **Simplified Naming Module**: Refactored `Orchid.Symbiont.Naming` with cleaner API:
+  - `get_registry/0` - Returns the unified registry
+  - `session_supervisor/1` - Returns via tuple for session supervisor
+  - `worker/2` - Returns via tuple for session workers
+
+### Removed
+- Per-session Registry processes (now uses global with compound keys)
+- Per-session Catalog processes (now uses single global instance)
+- Per-session Preloader processes (now uses global `Orchid.Symbiont.Preloader`)
+- `Naming.registry/1`, `Naming.catalog/1`, `Naming.preloader/1` functions
+
+### Migration Guide (0.2.0 → 0.2.1)
+
+```elixir
+# Before (0.2.0)
+{Orchid.Symbiont.Runtime, session_id: :my_session}
+Orchid.Symbiont.register(:my_session, :worker, {MyWorker, []})
+Orchid.WorkflowCtx.put_baggage(:session_id, :my_session)
+
+# After (0.2.1)
+{Orchid.Symbiont.Runtime, session_id: "my_session"}
+Orchid.Symbiont.register("my_session", :worker, {MyWorker, []})
+Orchid.WorkflowCtx.put_baggage(:session_id, "my_session")
+```
 
 ## [0.2.0] - 2026-01-04
 
