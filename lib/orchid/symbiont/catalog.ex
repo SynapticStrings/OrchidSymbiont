@@ -1,18 +1,24 @@
 defmodule Orchid.Symbiont.Catalog do
   use GenServer
 
+  @type sesssion_id:: binary()
+  @type name :: {sesssion_id(), Orchid.Symbiont.Step.symbiont_name()}
+
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
   end
 
+  @spec register(name() | Orchid.Symbiont.Step.symbiont_name(), {module(), term()}) :: any()
   def register(name, {mod, args}) do
     GenServer.call(__MODULE__, {:register, name, {mod, args}})
   end
 
+  @spec lookup(Orchid.Symbiont.Step.symbiont_name()) :: any()
   def lookup(name) do
     GenServer.call(__MODULE__, {:lookup, name})
   end
 
+  @spec lookup(sesssion_id(), Orchid.Symbiont.Step.symbiont_name()) :: any()
   def lookup(session_id, name) when not is_nil(session_id) do
     GenServer.call(__MODULE__, {:lookup, {session_id, name}})
     |> case do
@@ -21,10 +27,12 @@ defmodule Orchid.Symbiont.Catalog do
     end
   end
 
+  @spec clear_session(sesssion_id()) :: :ok
   def clear_session(session_id) do
     GenServer.cast(__MODULE__, {:clear, session_id})
   end
 
+  @spec clear() :: :ok
   def clear do
     GenServer.cast(__MODULE__, :clear_all)
   end

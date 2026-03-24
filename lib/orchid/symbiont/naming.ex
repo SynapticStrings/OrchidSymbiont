@@ -2,6 +2,8 @@ defmodule Orchid.Symbiont.Naming do
   @moduledoc "负责将逻辑组件映射到实际的进程注册名"
   @registry Orchid.Symbiont.Registry
 
+  def get_registry, do: @registry
+
   def dynamic_supervisor(nil), do: Orchid.Symbiont.DynamicSupervisor
   def dynamic_supervisor(session_id), do: {:via, Registry, {@registry, {session_id, :__supervisor__}}}
 

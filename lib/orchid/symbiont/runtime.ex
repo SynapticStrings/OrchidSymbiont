@@ -1,5 +1,5 @@
 defmodule Orchid.Symbiont.Runtime do
-  use Supervisor
+  use DynamicSupervisor
   alias Orchid.Symbiont.Naming
 
   def start_link(opts) do
