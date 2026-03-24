@@ -27,7 +27,7 @@ def deps do
 end
 ```
 
-Ensure `Orchid.Symbiont.Application` is started in your supervision tree (handled automatically for the global default namespace).
+Ensure `Application` is started in your supervision tree (handled automatically for the global default namespace).
 
 ## Usage
 
@@ -38,16 +38,16 @@ Tell Symbiont how to start your service.
 ```elixir
 # Register a logical name to a GenServer spec
 # :heavy_calculator maps to {MyCalculatorWorker, [init_arg: :foo]}
-Orchid.Symbiont.register(:heavy_calculator, {MyCalculatorWorker, [init_arg: :foo]})
+OrchidSymbiont.register(:heavy_calculator, {MyCalculatorWorker, [init_arg: :foo]})
 ```
 
 ### 2. Define Steps
 
-Implement the `Orchid.Symbiont.Step` behaviour. Note that we use `run_with_model/3` instead of the standard `run/2`.
+Implement the `OrchidSymbiont.Step` behaviour. Note that we use `run_with_model/3` instead of the standard `run/2`.
 
 ```elixir
 defmodule MyWorkflow.CalculateStep do
-  @behaviour Orchid.Symbiont.Step
+  @behaviour OrchidSymbiont.Step
 
   @impl true
   def required, do: [:heavy_calculator]
@@ -57,7 +57,7 @@ defmodule MyWorkflow.CalculateStep do
     # Get the resolved service reference
     worker = handlers[:heavy_calculator] 
 
-    result = Orchid.Symbiont.call(worker, {:compute, input})
+    result = OrchidSymbiont.call(worker, {:compute, input})
     
     {:ok, result}
   end
@@ -66,12 +66,12 @@ end
 
 ### 3. Run with Hook
 
-Inject the `Orchid.Symbiont.Hooks.Injector` into your recipe's step configuration.
+Inject the `OrchidSymbiont.Hooks.Injector` into your recipe's step configuration.
 
 ```elixir
 step_opts = [
   # This hook activates the Symbiont logic
-  extra_hooks_stack: [Orchid.Symbiont.Hooks.Injector] 
+  extra_hooks_stack: [OrchidSymbiont.Hooks.Injector] 
 ]
 
 # ... define steps and recipe ...
@@ -94,7 +94,7 @@ You must start a Runtime for your specific session in your application's supervi
 ```elixir
 # Start an isolated environment for a specific project/tenant
 children = [
-  {Orchid.Symbiont.Runtime, session_id: "project_a_session"}
+  {OrchidSymbiont.Runtime, session_id: "project_a_session"}
 ]
 Supervisor.start_link(children, strategy: :one_for_one)
 ```
@@ -106,7 +106,7 @@ You can register blueprints globally (without a session ID) or specifically for 
 
 ```elixir
 # Register specifically for project_a_session
-Orchid.Symbiont.register("project_a_session", :heavy_calculator, {MyCustomWorker, []})
+OrchidSymbiont.register("project_a_session", :heavy_calculator, {MyCustomWorker, []})
 ```
 
 ### 3. Run the Workflow in a Session
@@ -126,7 +126,7 @@ That's it! Symbiont will now automatically resolve and start processes under the
 
 ## How it works
 
-1.  **Intercept**: The `Orchid.Symbiont.Hooks.Injector` pauses the step execution.
+1.  **Intercept**: The `OrchidSymbiont.Hooks.Injector` pauses the step execution.
 2.  **Check**: It reads the `required()` list from your step and looks for a `:session_id` in the workflow baggage.
 3.  **Resolve**: 
   * Uses the `Naming` module to route to the correct `Registry` and `Catalog` based on the session ID.

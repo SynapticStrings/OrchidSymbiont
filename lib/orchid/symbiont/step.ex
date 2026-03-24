@@ -1,4 +1,4 @@
-defmodule Orchid.Symbiont.Step do
+defmodule OrchidSymbiont.Step do
   @moduledoc """
   ...
 
@@ -7,12 +7,12 @@ defmodule Orchid.Symbiont.Step do
       {
         CustomeStep,
         :input, :output,
-        [{Orchid.Symbiont.Step.get_required(), [foo: :bar]}]
+        [{OrchidSymbiont.Step.get_required(), [foo: :bar]}]
       }
   """
 
   @type symbiont_name :: atom()
-  @type symbiont_map :: %{symbiont_name() => Orchid.Symbiont.Handler.t()}
+  @type symbiont_map :: %{symbiont_name() => OrchidSymbiont.Handler.t()}
 
   @callback required() :: [symbiont_name()]
 

@@ -1,5 +1,5 @@
-defmodule Orchid.Symbiont.Hooks.Injector do
-  alias Orchid.Symbiont.Step, as: SymbiontStep
+defmodule OrchidSymbiont.Hooks.Injector do
+  alias OrchidSymbiont.Step, as: SymbiontStep
   @behaviour Orchid.Runner.Hook
 
   defmodule Adapter do
@@ -74,7 +74,7 @@ defmodule Orchid.Symbiont.Hooks.Injector do
     Enum.reduce_while(logical_names, %{}, fn logical, acc ->
       external_name = Map.get(bindings, logical, logical)
 
-      case Orchid.Symbiont.Resolver.resolve(session_id, external_name) do
+      case OrchidSymbiont.Resolver.resolve(session_id, external_name) do
         {:ok, handler} -> {:cont, Map.put(acc, logical, handler)}
         {:error, error} -> {:halt, {:error, error}}
       end

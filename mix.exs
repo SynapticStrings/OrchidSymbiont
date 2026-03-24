@@ -21,7 +21,7 @@ defmodule OrchidSymbiont.MixProject do
   def application do
     [
       extra_applications: [:logger],
-      mod: {Orchid.Symbiont.Application, []}
+      mod: {OrchidSymbiont.Application, []}
     ]
   end
 

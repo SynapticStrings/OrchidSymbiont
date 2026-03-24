@@ -1,5 +1,5 @@
-defmodule Orchid.Symbiont.Resolver do
-  alias Orchid.Symbiont.{Catalog, Handler, Naming}
+defmodule OrchidSymbiont.Resolver do
+  alias OrchidSymbiont.{Catalog, Handler, Naming}
 
   def resolve(session_id \\ nil, name) do
     case Registry.lookup(Naming.get_registry(), {session_id, name}) do
@@ -26,7 +26,7 @@ defmodule Orchid.Symbiont.Resolver do
             %{
               id: name,
               start:
-                {Orchid.Symbiont.TTLWrapper, :start_link,
+                {OrchidSymbiont.TTLWrapper, :start_link,
                  [
                    [
                      name: via_name,

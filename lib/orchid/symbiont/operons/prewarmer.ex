@@ -1,4 +1,4 @@
-defmodule Orchid.Symbiont.Operons.Prewarmer do
+defmodule OrchidSymbiont.Operons.Prewarmer do
   alias Orchid.Operon
   @behaviour Operon
 
@@ -10,7 +10,7 @@ defmodule Orchid.Symbiont.Operons.Prewarmer do
       |> Enum.map(fn step ->
         {impl, _, _} = Orchid.Step.extract_schema(step)
 
-        if Orchid.Symbiont.Step.has_model?(impl) do
+        if OrchidSymbiont.Step.has_model?(impl) do
           impl.required()
         else
           []
@@ -19,7 +19,7 @@ defmodule Orchid.Symbiont.Operons.Prewarmer do
       |> List.flatten()
       |> Enum.uniq()
 
-    Orchid.Symbiont.preload(services_to_warm)
+    OrchidSymbiont.preload(services_to_warm)
 
     next_fn.(request)
   end

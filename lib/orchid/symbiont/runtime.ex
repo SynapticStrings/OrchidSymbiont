@@ -1,6 +1,6 @@
-defmodule Orchid.Symbiont.Runtime do
+defmodule OrchidSymbiont.Runtime do
   use DynamicSupervisor
-  alias Orchid.Symbiont.Naming
+  alias OrchidSymbiont.Naming
 
   def start_link(opts) do
     session_id = Keyword.get(opts, :session_id)

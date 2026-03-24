@@ -1,5 +1,5 @@
-defmodule Orchid.Symbiont do
-  alias Orchid.Symbiont.{Step, Handler, Resolver, Catalog}
+defmodule OrchidSymbiont do
+  alias OrchidSymbiont.{Step, Handler, Resolver, Catalog}
 
   @spec register(Step.symbiont_name(), {module(), any()}) :: :ok
   def register(name, mod_and_args), do: Catalog.register(name, mod_and_args)
@@ -11,7 +11,7 @@ defmodule Orchid.Symbiont do
   def preload(name) when not is_list(name), do: do_preload(nil, name)
 
   defp do_preload(session_id, name) do
-    Task.Supervisor.start_child(Orchid.Symbiont.Preloader, fn ->
+    Task.Supervisor.start_child(OrchidSymbiont.Preloader, fn ->
       case Resolver.resolve(session_id, name) do
         {:ok, _} ->
           :ok

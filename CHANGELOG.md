@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.1]
+## [0.2.1] - 2026-03-24
+
+### BREAKING CHANGE
+
+- Move legacy module name `Orchid.Symbiont` into `OrchidSymbiont`.
 
 ### Fixed
 - **Atom Exhaustion Vulnerability**: Resolved a critical memory leak issue where dynamic session IDs (atoms) were never garbage collected, potentially causing VM crashes in long-running multi-tenant applications.
@@ -34,8 +38,8 @@ Orchid.Symbiont.register(:my_session, :worker, {MyWorker, []})
 Orchid.WorkflowCtx.put_baggage(:session_id, :my_session)
 
 # After (0.2.1)
-{Orchid.Symbiont.Runtime, session_id: "my_session"}
-Orchid.Symbiont.register("my_session", :worker, {MyWorker, []})
+{OrchidSymbiont.Runtime, session_id: "my_session"}
+OrchidSymbiont.register("my_session", :worker, {MyWorker, []})
 Orchid.WorkflowCtx.put_baggage(:session_id, "my_session")
 ```
 

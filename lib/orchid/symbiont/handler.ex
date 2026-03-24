@@ -1,4 +1,4 @@
-defmodule Orchid.Symbiont.Handler do
+defmodule OrchidSymbiont.Handler do
   @type t :: %__MODULE__{
     name: term(),
     ref: {atom(), node()} | pid() | atom(),

@@ -1,4 +1,4 @@
-defmodule Orchid.Symbiont.TTLWrapper do
+defmodule OrchidSymbiont.TTLWrapper do
   use GenServer
 
   defstruct [:worker_pid, :ttl]
