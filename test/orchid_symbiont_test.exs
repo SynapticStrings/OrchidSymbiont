@@ -28,15 +28,11 @@ defmodule Orchid.Symbiont.Test do
 
     def run_with_model(params, ports, _opts) do
       handler = ports.model
-      # Symbiont.call 内部自带了 pid，所以不需要改，依然可以跨 session 工作
       {:ok, result} = Orchid.Symbiont.call(handler, {:process, Orchid.Param.get_payload(params)})
       {:ok, Orchid.Param.new(:result, :any, result)}
     end
   end
 
-  # ==========================================
-  # 测试环境初始化
-  # ==========================================
   setup context do
     Orchid.Symbiont.Catalog.clear()
 
@@ -47,12 +43,7 @@ defmodule Orchid.Symbiont.Test do
     %{session_id: session_id}
   end
 
-  # ==========================================
-  # 测试用例
-  # ==========================================
-
   test "complete flow: register -> resolve -> inject -> run", %{session_id: session_id} do
-    # 1. 在指定的 session_id 中注册服务
     :ok = Orchid.Symbiont.register(session_id, :stable_diffusion, {MockWorker, []})
 
     # 2. 解析时也带上 session_id
@@ -64,7 +55,6 @@ defmodule Orchid.Symbiont.Test do
 
     input_params = %{data: Orchid.Param.new(:data, :any, "input_img")}
 
-    # 3. 最关键的一步：通过 Orchid 的 baggage 把 session_id 传给底层的 Injector Hook
     opts = [
       baggage: %{session_id: session_id}
     ]
@@ -83,7 +73,6 @@ defmodule Orchid.Symbiont.Test do
     assert "input_img_processed" == Orchid.Param.get_payload(result.result)
     IO.puts(">> Step execute success with result: #{inspect(result)}")
 
-    # 测试进程崩溃重启
     Process.exit(handler.ref, :kill)
     Process.sleep(10)
 
@@ -108,32 +97,24 @@ defmodule Orchid.Symbiont.Test do
     Orchid.Symbiont.call(handler, "keep_alive_again")
     Process.sleep(150)
 
-    # 验证进程是否因 TTL 超时被关闭
     refute Process.alive?(pid)
 
-    # 获取动态的 Registry 名字并断言
     assert [] == Registry.lookup(Orchid.Symbiont.Registry, {session_id, :fast_worker})
 
     {:ok, new_handler} = Orchid.Symbiont.Resolver.resolve(session_id, :fast_worker)
     assert new_handler.ref != pid
   end
 
-  # ==========================================
-  # 【新增】核心测试：多租户/沙盒隔离测试
-  # ==========================================
   test "sessions are completely isolated" do
     session_a = "project_a_session"
     session_b = "project_b_session"
 
-    # 手动拉起两个完全隔离的引擎运行时
     start_supervised!(Supervisor.child_spec({Orchid.Symbiont.Runtime, session_id: session_a}, id: session_a))
     start_supervised!(Supervisor.child_spec({Orchid.Symbiont.Runtime, session_id: session_b}, id: session_b))
 
-    # 1. 在 Session A 注册并启动一个 Worker
     :ok = Orchid.Symbiont.register(session_a, :shared_name_worker, {MockWorker, []})
     {:ok, handler_a} = Orchid.Symbiont.Resolver.resolve(session_a, :shared_name_worker)
 
-    # 2. 验证 Session B 根本不知道有这个东西存在（因为图纸存在 A 的 Catalog 里）
     assert {:error, {:unknown_symbiont, :shared_name_worker}} ==
              Orchid.Symbiont.Resolver.resolve(session_b, :shared_name_worker)
 

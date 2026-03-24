@@ -1,5 +1,5 @@
 defmodule Orchid.Symbiont.Naming do
-  @moduledoc "负责将逻辑组件映射到实际的进程注册名"
+  @moduledoc "Responsible for mapping logical components (after mapper) to actual process registration names."
   @registry Orchid.Symbiont.Registry
 
   def get_registry, do: @registry

@@ -1,4 +1,6 @@
 defmodule Orchid.Symbiont.Application do
+  @moduledoc false
+
   use Application
 
   @impl true
