@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.2] - 2026-03-25
 
+### Added
+
+- **Strict Mode**: A new `strict_mode: true` option has been added to `OrchidSymbiont.Resolver.resolve/3`. When enabled, if the corresponding service blueprint is not found in the current Session's Catalog, an error will be thrown directly, and **there will be no fallback** to the global Catalog, thus ensuring stricter multi-tenant security isolation.
+
+- **State Backup and Restore**: The `dump/1` and `restore/2` methods have been added to `OrchidSymbiont.Catalog` for easy exporting and restoring of the current Catalog's state.
+
+### Changed
+
+- **[Architecture Refactoring] True Session Isolation**: The Session's supervised tree model has been refactored. Now, when you start a Session using `OrchidSymbiont.Runtime`, it launches a dedicated `OrchidSymbiont.Catalog` process for that Session. Registration states between different Sessions are now truly physically isolated, instead of being distinguished by tuples `{{session_id, name}, val}` in the global state.
+
+- **[Performance Optimization] Catalog Underlying Replacement**: The underlying implementation of `OrchidSymbiont.Catalog` has been simplified from `GenServer` to `Agent`, making it more lightweight and better suited to its pure state storage nature.
+
+- ****Startup Layer Optimization**: The application startup process has been streamlined. The bloated list of child processes in OrchidSymbiont.Application has been removed. The startup logic for global services (`Registry`, global `Catalog`, `DynamicSupervisor`, `Preloader`) is now consolidated and wrapped within the `:global` initialization strategy of `OrchidSymbiont.Runtime`.
+
+### Removed
+
+- Removed `clear/0` and `clear_session/1` in `OrchidSymbiont.Catalog` module. Since Sessions now manage their lifecycle through an independent supervision tree, their internal Catalog processes are automatically destroyed and reclaimed when the corresponding `Runtime` terminates, eliminating the need for manual cleanup.
+
 ## [0.2.1] - 2026-03-24
 
 ### BREAKING CHANGE
