@@ -1,62 +1,26 @@
 defmodule OrchidSymbiont.Catalog do
-  use GenServer
+  use Agent
 
-  @type sesssion_id:: binary()
-  @type name :: {sesssion_id(), OrchidSymbiont.Step.symbiont_name()}
+  def start_link(session_id: session_id) do
+    name = OrchidSymbiont.Naming.catalog(session_id)
+    Agent.start_link(fn -> %{} end, name: name)
+  end
 
   def start_link(_opts) do
-    GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+    Agent.start_link(fn -> %{} end, name: __MODULE__)
   end
 
-  @spec register(name() | OrchidSymbiont.Step.symbiont_name(), {module(), term()}) :: any()
-  def register(name, {mod, args}) do
-    GenServer.call(__MODULE__, {:register, name, {mod, args}})
-  end
-
-  @spec lookup(OrchidSymbiont.Step.symbiont_name()) :: any()
-  def lookup(name) do
-    GenServer.call(__MODULE__, {:lookup, name})
-  end
-
-  @spec lookup(sesssion_id(), OrchidSymbiont.Step.symbiont_name()) :: any()
-  def lookup(session_id, name) when not is_nil(session_id) do
-    GenServer.call(__MODULE__, {:lookup, {session_id, name}})
-    |> case do
-      nil -> GenServer.call(__MODULE__, {:lookup, name})
-      res -> res
+  def lookup(name \\ __MODULE__, key) do
+    case Agent.get(name, &Map.get(&1, key)) do
+      nil -> :not_found
+      val -> {:ok, val}
     end
   end
 
-  @spec clear_session(sesssion_id()) :: :ok
-  def clear_session(session_id) do
-    GenServer.cast(__MODULE__, {:clear, session_id})
+  def register(name \\ __MODULE__, key, value) do
+    Agent.update(name, &Map.put(&1, key, value))
   end
 
-  @spec clear() :: :ok
-  def clear do
-    GenServer.cast(__MODULE__, :clear_all)
-  end
-
-  @impl true
-  def init(state), do: {:ok, state}
-
-  @impl true
-  def handle_call({:register, name, spec}, _from, state) do
-    {:reply, :ok, Map.put(state, name, spec)}
-  end
-
-  @impl true
-  def handle_call({:lookup, name}, _from, state) do
-    {:reply, Map.get(state, name), state}
-  end
-
-  @impl true
-  def handle_cast({:clear, session}, state) when not is_tuple(session) do
-    {:noreply, Map.reject(state, fn {{session_id, _logical}, _v} -> session_id == session end)}
-  end
-
-  @impl true
-  def handle_cast(:clear_all, _state) do
-    {:noreply, %{}}
-  end
+  def dump(name \\ __MODULE__), do: Agent.get(name, & &1)
+  def restore(name \\ __MODULE__, data), do: Agent.update(name, fn _ -> data end)
 end

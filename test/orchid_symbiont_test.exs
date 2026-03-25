@@ -35,8 +35,6 @@ defmodule OrchidSymbiont.Test do
   end
 
   setup context do
-    OrchidSymbiont.Catalog.clear()
-
     session_id = "session_#{context.test}"
 
     start_supervised!({OrchidSymbiont.Runtime, session_id: session_id})
