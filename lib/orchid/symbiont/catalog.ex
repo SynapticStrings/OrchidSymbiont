@@ -1,13 +1,15 @@
 defmodule OrchidSymbiont.Catalog do
   use Agent
 
-  def start_link(session_id: session_id) do
-    name = OrchidSymbiont.Naming.catalog(session_id)
-    Agent.start_link(fn -> %{} end, name: name)
-  end
+  def start_link(opts) do
+    case Keyword.get(opts, :session_id) do
+      nil ->
+        Agent.start_link(fn -> %{} end, name: __MODULE__)
 
-  def start_link(_opts) do
-    Agent.start_link(fn -> %{} end, name: __MODULE__)
+      session_id ->
+        name = OrchidSymbiont.Naming.catalog(session_id)
+        Agent.start_link(fn -> %{} end, name: name)
+    end
   end
 
   def lookup(name \\ __MODULE__, key) do
