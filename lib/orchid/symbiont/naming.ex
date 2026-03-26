@@ -5,12 +5,12 @@ defmodule OrchidSymbiont.Naming do
   def get_registry, do: @registry
 
   def catalog(nil), do: OrchidSymbiont.Catalog
-  def catalog(session_id), do: via_tuple(session_id, :catalog)
+  def catalog(scope_id), do: via_tuple(scope_id, :catalog)
 
   def dynamic_supervisor(nil), do: OrchidSymbiont.DynamicSupervisor
-  def dynamic_supervisor(session_id), do: via_tuple(session_id, :supervisor)
+  def dynamic_supervisor(scope_id), do: via_tuple(scope_id, :supervisor)
 
-  defp via_tuple(session_id, role) do
-    {:via, Registry, {@registry, {session_id, role}}}
+  defp via_tuple(scope_id, role) do
+    {:via, Registry, {@registry, {scope_id, role}}}
   end
 end

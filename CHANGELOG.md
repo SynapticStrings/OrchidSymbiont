@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] - 2025-03-26
+
+### Enhenced
+- **Symbiont ID Type**: Now Symbiont's ID also support binary. *If the name is dynamically generated in your application, it is recommended to use binary instead of atom to avoid memory leaks.*
+
+### Changed
+- **Scopa Name Declaration**: Now we use `:scope_id` instead `:session_id` to seperate domains.
+
+### Migration Guide (0.2.3 -> 0.2.4)
+
+```elixir
+# Before
+{OrchidSymbiont.Runtime, session_id: "my_session"}
+OrchidSymbiont.register("my_session", :worker, {MyWorker, []})
+Orchid.WorkflowCtx.put_baggage(:session_id, "my_session")
+# After
+{OrchidSymbiont.Runtime, scope_id: "my_session"}
+OrchidSymbiont.register("my_session", :worker, {MyWorker, []})
+Orchid.WorkflowCtx.put_baggage(:scope_id, "my_session")
+```
+
 ## [0.2.3] - 2026-03-25
 
 ### Fix

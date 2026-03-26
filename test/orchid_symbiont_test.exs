@@ -35,18 +35,18 @@ defmodule OrchidSymbiont.Test do
   end
 
   setup context do
-    session_id = "session_#{context.test}"
+    scope_id = "scope_#{context.test}"
 
-    start_supervised!({OrchidSymbiont.Runtime, session_id: session_id})
+    start_supervised!({OrchidSymbiont.Runtime, scope_id: scope_id})
 
-    %{session_id: session_id}
+    %{scope_id: scope_id}
   end
 
-  test "complete flow: register -> resolve -> inject -> run", %{session_id: session_id} do
-    :ok = OrchidSymbiont.register(session_id, :stable_diffusion, {MockWorker, []})
+  test "complete flow: register -> resolve -> inject -> run", %{scope_id: scope_id} do
+    :ok = OrchidSymbiont.register(scope_id, "stable_diffusion", {MockWorker, []})
 
-    # 2. 解析时也带上 session_id
-    {:ok, handler} = OrchidSymbiont.Resolver.resolve(session_id, :stable_diffusion)
+    # 2. 解析时也带上 scope_id
+    {:ok, handler} = OrchidSymbiont.Resolver.resolve(scope_id, "stable_diffusion")
 
     assert is_pid(handler.ref)
     assert Process.alive?(handler.ref)
@@ -55,7 +55,7 @@ defmodule OrchidSymbiont.Test do
     input_params = %{data: Orchid.Param.new(:data, :any, "input_img")}
 
     opts = [
-      baggage: %{session_id: session_id}
+      baggage: %{scope_id: scope_id}
     ]
 
     {:ok, result} =
@@ -63,7 +63,7 @@ defmodule OrchidSymbiont.Test do
         Orchid.Recipe.new([
           {MyImageStep, :data, :result,
            extra_hooks_stack: [OrchidSymbiont.Hooks.Injector],
-           symbiont_mapper: [model: :stable_diffusion]}
+           symbiont_mapper: [model: "stable_diffusion"]}
         ]),
         input_params,
         opts
@@ -75,17 +75,17 @@ defmodule OrchidSymbiont.Test do
     Process.exit(handler.ref, :kill)
     Process.sleep(10)
 
-    {:ok, new_handler} = OrchidSymbiont.Resolver.resolve(session_id, :stable_diffusion)
+    {:ok, new_handler} = OrchidSymbiont.Resolver.resolve(scope_id, "stable_diffusion")
 
     assert new_handler.ref != handler.ref
     assert Process.alive?(new_handler.ref)
     Logger.info(">> Symbiont re-activated successfully\n\nOld: #{inspect(handler.ref)} -> New: #{inspect(new_handler.ref)}")
   end
 
-  test "auto shutdown on idle (TTL)", %{session_id: session_id} do
-    :ok = OrchidSymbiont.register(session_id, :fast_worker, {MockWorker, [ttl: 100]})
+  test "auto shutdown on idle (TTL)", %{scope_id: scope_id} do
+    :ok = OrchidSymbiont.register(scope_id, "fast_worker", {MockWorker, [ttl: 100]})
 
-    {:ok, handler} = OrchidSymbiont.Resolver.resolve(session_id, :fast_worker)
+    {:ok, handler} = OrchidSymbiont.Resolver.resolve(scope_id, "fast_worker")
     pid = handler.ref
     assert Process.alive?(pid)
 
@@ -98,27 +98,27 @@ defmodule OrchidSymbiont.Test do
 
     refute Process.alive?(pid)
 
-    assert [] == Registry.lookup(OrchidSymbiont.Registry, {session_id, :fast_worker})
+    assert [] == Registry.lookup(OrchidSymbiont.Registry, {scope_id, "fast_worker"})
 
-    {:ok, new_handler} = OrchidSymbiont.Resolver.resolve(session_id, :fast_worker)
+    {:ok, new_handler} = OrchidSymbiont.Resolver.resolve(scope_id, "fast_worker")
     assert new_handler.ref != pid
   end
 
-  test "sessions are completely isolated" do
-    session_a = "project_a_session"
-    session_b = "project_b_session"
+  test "scopes are completely isolated" do
+    scope_a = "project_a_scope"
+    scope_b = "project_b_scope"
 
-    start_supervised!(Supervisor.child_spec({OrchidSymbiont.Runtime, session_id: session_a}, id: session_a))
-    start_supervised!(Supervisor.child_spec({OrchidSymbiont.Runtime, session_id: session_b}, id: session_b))
+    start_supervised!(Supervisor.child_spec({OrchidSymbiont.Runtime, scope_id: scope_a}, id: scope_a))
+    start_supervised!(Supervisor.child_spec({OrchidSymbiont.Runtime, scope_id: scope_b}, id: scope_b))
 
-    :ok = OrchidSymbiont.register(session_a, :shared_name_worker, {MockWorker, []})
-    {:ok, handler_a} = OrchidSymbiont.Resolver.resolve(session_a, :shared_name_worker)
+    :ok = OrchidSymbiont.register(scope_a, "shared_name_worker", {MockWorker, []})
+    {:ok, handler_a} = OrchidSymbiont.Resolver.resolve(scope_a, "shared_name_worker")
 
-    assert {:error, {:unknown_symbiont, :shared_name_worker}} ==
-             OrchidSymbiont.Resolver.resolve(session_b, :shared_name_worker)
+    assert {:error, {:unknown_symbiont, "shared_name_worker"}} ==
+             OrchidSymbiont.Resolver.resolve(scope_b, "shared_name_worker")
 
-    :ok = OrchidSymbiont.register(session_b, :shared_name_worker, {MockWorker, []})
-    {:ok, handler_b} = OrchidSymbiont.Resolver.resolve(session_b, :shared_name_worker)
+    :ok = OrchidSymbiont.register(scope_b, "shared_name_worker", {MockWorker, []})
+    {:ok, handler_b} = OrchidSymbiont.Resolver.resolve(scope_b, "shared_name_worker")
 
     assert handler_a.ref != handler_b.ref
     assert Process.alive?(handler_a.ref)

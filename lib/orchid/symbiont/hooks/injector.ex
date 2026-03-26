@@ -63,7 +63,7 @@ defmodule OrchidSymbiont.Hooks.Injector do
     logical_names = symbiont_step.required()
     binding_key = SymbiontStep.get_required() # :symbiont_mapper
 
-    session_id = Orchid.WorkflowCtx.get_baggage(workflow_ctx, :session_id, nil)
+    scope_id = Orchid.WorkflowCtx.get_baggage(workflow_ctx, :scope_id, nil)
 
     global_bindings = Orchid.WorkflowCtx.get_baggage(workflow_ctx, binding_key, %{}) |> Map.new()
 
@@ -74,7 +74,7 @@ defmodule OrchidSymbiont.Hooks.Injector do
     Enum.reduce_while(logical_names, %{}, fn logical, acc ->
       external_name = Map.get(bindings, logical, logical)
 
-      case OrchidSymbiont.Resolver.resolve(session_id, external_name) do
+      case OrchidSymbiont.Resolver.resolve(scope_id, external_name) do
         {:ok, handler} -> {:cont, Map.put(acc, logical, handler)}
         {:error, error} -> {:halt, {:error, error}}
       end

@@ -2,9 +2,9 @@ defmodule OrchidSymbiont.Runtime do
   use Supervisor
 
   def start_link(init_arg) do
-    case Keyword.get(init_arg, :session_id) do
+    case Keyword.get(init_arg, :scope_id) do
       nil -> Supervisor.start_link(__MODULE__, :global, name: __MODULE__)
-      session_id -> Supervisor.start_link(__MODULE__, {:session, session_id})
+      scope_id -> Supervisor.start_link(__MODULE__, {:scope, scope_id})
     end
   end
 
@@ -22,12 +22,12 @@ defmodule OrchidSymbiont.Runtime do
   end
 
   @impl true
-  def init({:session, session_id}) do
+  def init({:scope, scope_id}) do
     children = [
-      # 启动 Session Catalog
-      {OrchidSymbiont.Catalog, [session_id: session_id]},
+      # 启动 scope Catalog
+      {OrchidSymbiont.Catalog, [scope_id: scope_id]},
       {DynamicSupervisor,
-       name: OrchidSymbiont.Naming.dynamic_supervisor(session_id), strategy: :one_for_one}
+       name: OrchidSymbiont.Naming.dynamic_supervisor(scope_id), strategy: :one_for_one}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

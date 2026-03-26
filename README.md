@@ -81,11 +81,11 @@ Orchid.run(recipe, inputs)
 
 ---
 
-## 🚀 Advanced: Session Isolation (New in 0.2.0)
+## 🚀 Advanced: Scope Isolation (New in 0.2.x)
 
-If you are building a SaaS application or need completely isolated environments for different workflows, you can use **Sessions**. 
+If you are building a SaaS application or need completely isolated environments for different workflows, you can use **Scope**. 
 
-A Session creates a dedicated, dynamically named `Registry`, `DynamicSupervisor`, and `Catalog`. Processes running in `:session_a` cannot see or conflict with processes in `:session_b`, even if they share the same logical names!
+A Session creates a dedicated, dynamically named `Registry`, `DynamicSupervisor`, and `Catalog`. Processes running in `"scope_a"` cannot see or conflict with processes in `"scope_b"`, even if they share the same logical names!
 
 ### 1. Start a Session Runtime
 
@@ -94,7 +94,7 @@ You must start a Runtime for your specific session in your application's supervi
 ```elixir
 # Start an isolated environment for a specific project/tenant
 children = [
-  {OrchidSymbiont.Runtime, session_id: "project_a_session"}
+  {OrchidSymbiont.Runtime, scope_id: "project_a_session"}
 ]
 Supervisor.start_link(children, strategy: :one_for_one)
 ```
@@ -111,11 +111,11 @@ OrchidSymbiont.register("project_a_session", :heavy_calculator, {MyCustomWorker,
 
 ### 3. Run the Workflow in a Session
 
-To tell the Symbiont Injector Hook to use a specific session, simply pass the `session_id` into the Orchid `WorkflowCtx` baggage:
+To tell the Symbiont Injector Hook to use a specific session, simply pass the `scope_id` into the Orchid `WorkflowCtx` baggage:
 
 ```elixir
 workflow_ctx = Orchid.WorkflowCtx.new()
-  |> Orchid.WorkflowCtx.put_baggage(:session_id, "project_a_session") # <-- Tell Symbiont to use this sandbox
+  |> Orchid.WorkflowCtx.put_baggage(:scope_id, "project_a_session") # <-- Tell Symbiont to use this sandbox
 
 Orchid.run(recipe, inputs, workflow_ctx: workflow_ctx)
 ```
@@ -127,7 +127,7 @@ That's it! Symbiont will now automatically resolve and start processes under the
 ## How it works
 
 1.  **Intercept**: The `OrchidSymbiont.Hooks.Injector` pauses the step execution.
-2.  **Check**: It reads the `required()` list from your step and looks for a `:session_id` in the workflow baggage.
+2.  **Check**: It reads the `required()` list from your step and looks for a `:scope_id` in the workflow baggage.
 3.  **Resolve**: 
   * Uses the `Naming` module to route to the correct `Registry` and `Catalog` based on the session ID.
   * Checks if the service is alive. If not, looks up the blueprint and starts it under the isolated `DynamicSupervisor`.

@@ -11,7 +11,7 @@ defmodule OrchidSymbiont.Step do
       }
   """
 
-  @type symbiont_name :: atom()
+  @type symbiont_name :: atom() | binary()
   @type symbiont_map :: %{symbiont_name() => OrchidSymbiont.Handler.t()}
 
   @callback required() :: [symbiont_name()]
