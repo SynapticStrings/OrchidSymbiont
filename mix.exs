@@ -1,7 +1,7 @@
 defmodule OrchidSymbiont.MixProject do
   use Mix.Project
 
-  @version "0.2.4"
+  @version "0.2.5"
   @source_url "https://github.com/SynapticStrings/OrchidSymbiont"
 
   def project do
@@ -56,7 +56,7 @@ defmodule OrchidSymbiont.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:orchid, "~> 0.5"},
+      {:orchid, "~> 0.6"},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false}
     ]
   end
