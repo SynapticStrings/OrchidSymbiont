@@ -1,7 +1,7 @@
 defmodule OrchidSymbiont.MixProject do
   use Mix.Project
 
-  @version "0.2.5"
+  @version "0.2.6"
   @source_url "https://github.com/SynapticStrings/OrchidSymbiont"
 
   def project do
@@ -49,7 +49,8 @@ defmodule OrchidSymbiont.MixProject do
       main: "readme",
       extras: ["README.md", "CHANGELOG.md"],
       source_ref: "v#{@version}",
-      source_url: @source_url
+      source_url: @source_url,
+      groups_for_modules: groups_for_modules()
     ]
   end
 
@@ -58,6 +59,29 @@ defmodule OrchidSymbiont.MixProject do
     [
       {:orchid, "~> 0.6"},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false}
+    ]
+  end
+
+  defp groups_for_modules do
+    [
+      "Service Build": [
+        OrchidSymbiont.Handler
+      ],
+      "Orchid Binding": [
+        OrchidSymbiont.Step,
+        OrchidSymbiont.Hooks.Injector,
+        OrchidSymbiont.Hooks.Injector.Adapter,
+        OrchidSymbiont.Operons.Prewarmer
+      ],
+      Runtime: [
+        OrchidSymbiont.Runtime,
+        OrchidSymbiont.Naming,
+        OrchidSymbiont.Resolver,
+        OrchidSymbiont.Catalog
+      ],
+      "Auto Terminates": [
+        OrchidSymbiont.TTLWrapper
+      ]
     ]
   end
 end

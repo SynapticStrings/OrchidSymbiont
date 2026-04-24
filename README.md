@@ -21,7 +21,7 @@ Add to your `mix.exs`:
 ```elixir
 def deps do
   [
-    {:orchid, "~> 0.5"},
+    {:orchid, "~> 0.6"},
     {:orchid_symbiont, "~> 0.2"}
   ]
 end

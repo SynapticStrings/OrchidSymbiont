@@ -79,7 +79,10 @@ defmodule OrchidSymbiont.Test do
 
     assert new_handler.ref != handler.ref
     assert Process.alive?(new_handler.ref)
-    Logger.info(">> Symbiont re-activated successfully\n\nOld: #{inspect(handler.ref)} -> New: #{inspect(new_handler.ref)}")
+
+    Logger.info(
+      ">> Symbiont re-activated successfully\n\nOld: #{inspect(handler.ref)} -> New: #{inspect(new_handler.ref)}"
+    )
   end
 
   test "auto shutdown on idle (TTL)", %{scope_id: scope_id} do
@@ -108,8 +111,13 @@ defmodule OrchidSymbiont.Test do
     scope_a = "project_a_scope"
     scope_b = "project_b_scope"
 
-    start_supervised!(Supervisor.child_spec({OrchidSymbiont.Runtime, scope_id: scope_a}, id: scope_a))
-    start_supervised!(Supervisor.child_spec({OrchidSymbiont.Runtime, scope_id: scope_b}, id: scope_b))
+    start_supervised!(
+      Supervisor.child_spec({OrchidSymbiont.Runtime, scope_id: scope_a}, id: scope_a)
+    )
+
+    start_supervised!(
+      Supervisor.child_spec({OrchidSymbiont.Runtime, scope_id: scope_b}, id: scope_b)
+    )
 
     :ok = OrchidSymbiont.register(scope_a, "shared_name_worker", {MockWorker, []})
     {:ok, handler_a} = OrchidSymbiont.Resolver.resolve(scope_a, "shared_name_worker")

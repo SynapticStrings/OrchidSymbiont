@@ -36,7 +36,8 @@ defmodule OrchidSymbiont.Hooks.Injector do
     symbiont_step = ctx.step_implementation
 
     with true <- SymbiontStep.has_model?(symbiont_step),
-         handlers when is_map(handlers) <- get_headers(symbiont_step, ctx.step_opts, ctx.workflow_ctx) do
+         handlers when is_map(handlers) <-
+           get_headers(symbiont_step, ctx.step_opts, ctx.workflow_ctx) do
       updated_ctx = %{
         ctx
         | step_implementation: Adapter,
@@ -61,7 +62,8 @@ defmodule OrchidSymbiont.Hooks.Injector do
 
   defp get_headers(symbiont_step, step_opts, workflow_ctx) do
     logical_names = symbiont_step.required()
-    binding_key = SymbiontStep.get_required() # :symbiont_mapper
+    # :symbiont_mapper
+    binding_key = SymbiontStep.get_required()
 
     scope_id = Orchid.WorkflowCtx.get_baggage(workflow_ctx, :scope_id, nil)
 

@@ -1,8 +1,35 @@
 defmodule OrchidSymbiont.TTLWrapper do
+  @moduledoc """
+  A GenServer wrapper that auto-terminates idle workers.
+
+  This wrapper monitors the wrapped worker and will automatically
+  shut it down after a period of inactivity (TTL). Each request
+  resets the idle timer.
+
+  ## Options
+
+    * `:name` - The via-tuple name for registration (required)
+    * `:worker_mod` - The module to start (required)
+    * `:worker_args` - Arguments to pass to the worker's start_link (required)
+    * `:ttl` - Idle timeout in milliseconds (default: `:infinity`)
+
+  ## How It Works
+
+  The wrapper starts the actual worker as a linked process. On each
+  `handle_call`, the TTL timer is reset. If no requests are received
+  within the TTL period, the worker is terminated.
+
+  The wrapper traps exits to properly handle worker crashes.
+  """
+
   use GenServer
 
   defstruct [:worker_pid, :ttl]
 
+  @doc """
+  Starts the TTL wrapper with the given options.
+  """
+  @spec start_link(keyword()) :: GenServer.on_start()
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: Keyword.fetch!(opts, :name))
   end

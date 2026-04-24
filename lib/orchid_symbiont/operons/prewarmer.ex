@@ -3,7 +3,8 @@ defmodule OrchidSymbiont.Operons.Prewarmer do
   @behaviour Operon
 
   @impl true
-  @spec call(Operon.Request.t(), (Operon.Request.t() -> Operon.Response.t())) :: Operon.Response.t()
+  @spec call(Operon.Request.t(), (Operon.Request.t() -> Operon.Response.t())) ::
+          Operon.Response.t()
   def call(request, next_fn) do
     services_to_warm =
       request.recipe.steps

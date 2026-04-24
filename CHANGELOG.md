@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.4] - 2025-03-26
+## [0.2.5] & [0.2.6] - 2026-04-24
+
+### Enhenced
+- **Documents**: Updated documents.
+
+## [0.2.4] - 2026-03-26
 
 ### Enhenced
 - **Symbiont ID Type**: Now Symbiont's ID also support binary. *If the name is dynamically generated in your application, it is recommended to use binary instead of atom to avoid memory leaks.*

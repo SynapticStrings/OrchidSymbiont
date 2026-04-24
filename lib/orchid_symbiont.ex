@@ -4,7 +4,8 @@ defmodule OrchidSymbiont do
   @spec register(Step.symbiont_name(), {module(), any()}) :: :ok
   def register(name, mod_and_args), do: Catalog.register(name, mod_and_args)
   @spec register(binary(), Step.symbiont_name(), {module(), any()}) :: :ok
-  def register(scope_id, name, mod_and_args), do: Catalog.register(Naming.catalog(scope_id), name, mod_and_args)
+  def register(scope_id, name, mod_and_args),
+    do: Catalog.register(Naming.catalog(scope_id), name, mod_and_args)
 
   @spec preload([Step.symbiont_name()] | Step.symbiont_name()) :: :ok
   def preload(names) when is_list(names), do: Enum.each(names, &do_preload(nil, &1))
