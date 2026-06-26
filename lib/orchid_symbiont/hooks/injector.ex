@@ -66,6 +66,7 @@ defmodule OrchidSymbiont.Hooks.Injector do
     binding_key = SymbiontStep.get_required()
 
     scope_id = Orchid.WorkflowCtx.get_baggage(workflow_ctx, :scope_id, nil)
+    strict_mode? = Orchid.WorkflowCtx.get_baggage(workflow_ctx, :strict_mode, false)
 
     global_bindings = Orchid.WorkflowCtx.get_baggage(workflow_ctx, binding_key, %{}) |> Map.new()
 
@@ -73,10 +74,12 @@ defmodule OrchidSymbiont.Hooks.Injector do
 
     bindings = Map.merge(global_bindings, local_bindings)
 
+    resolve_opts = if strict_mode?, do: [strict_mode: true], else: []
+
     Enum.reduce_while(logical_names, %{}, fn logical, acc ->
       external_name = Map.get(bindings, logical, logical)
 
-      case OrchidSymbiont.Resolver.resolve(scope_id, external_name) do
+      case OrchidSymbiont.Resolver.resolve(scope_id, external_name, resolve_opts) do
         {:ok, handler} -> {:cont, Map.put(acc, logical, handler)}
         {:error, error} -> {:halt, {:error, error}}
       end

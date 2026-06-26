@@ -132,4 +132,93 @@ defmodule OrchidSymbiont.Test do
     assert Process.alive?(handler_a.ref)
     assert Process.alive?(handler_b.ref)
   end
+
+  # ── strict_mode ────────────────────────────────────────
+
+  describe "strict_mode" do
+    test "prevents fallback to global catalog", %{scope_id: scope_id} do
+      # Register in the globally-running runtime (started by Application)
+      :ok = OrchidSymbiont.register("global_model", {MockWorker, []})
+
+      # scope has NO registration for this model
+      # strict_mode: true should fail with strict_mode_violation
+      assert {:error, {:strict_mode_violation, msg}} =
+               OrchidSymbiont.Resolver.resolve(scope_id, "global_model", strict_mode: true)
+
+      assert msg =~ "global_model"
+      assert msg =~ scope_id
+    end
+
+    test "without strict_mode, falls back to global", %{scope_id: scope_id} do
+      :ok = OrchidSymbiont.register("shared_service", {MockWorker, []})
+
+      # scope has NO registration, but global does
+      # strict_mode default (false) falls back to global succeeds
+      {:ok, handler} = OrchidSymbiont.Resolver.resolve(scope_id, "shared_service")
+
+      assert is_pid(handler.ref)
+      assert Process.alive?(handler.ref)
+    end
+
+    test "strict_mode: true in baggage, scoped registration succeeds", %{scope_id: scope_id} do
+      # Register ONLY in scope
+      :ok = OrchidSymbiont.register(scope_id, "my_model", {MockWorker, []})
+
+      input_params = %{data: Orchid.Param.new(:data, :any, "hello")}
+
+      {:ok, result} =
+        Orchid.run(
+          Orchid.Recipe.new([
+            {MyImageStep, :data, :result,
+             extra_hooks_stack: [OrchidSymbiont.Hooks.Injector],
+             symbiont_mapper: [model: "my_model"]}
+          ]),
+          input_params,
+          baggage: %{scope_id: scope_id, strict_mode: true}
+        )
+
+      assert "hello_processed" == Orchid.Param.get_payload(result.result)
+    end
+
+    test "strict_mode: true blocks global fallback via Injector", %{scope_id: scope_id} do
+      # Register ONLY globally
+      :ok = OrchidSymbiont.register("global_only", {MockWorker, []})
+
+      input_params = %{data: Orchid.Param.new(:data, :any, "data")}
+
+      # strict_mode: true scope has no registration should fail
+      {:error, %Orchid.Error{reason: {:strict_mode_violation, msg}}} =
+        Orchid.run(
+          Orchid.Recipe.new([
+            {MyImageStep, :data, :result,
+             extra_hooks_stack: [OrchidSymbiont.Hooks.Injector],
+             symbiont_mapper: [model: "global_only"]}
+          ]),
+          input_params,
+          baggage: %{scope_id: scope_id, strict_mode: true}
+        )
+
+      assert msg =~ "global_only"
+      assert msg =~ scope_id
+    end
+
+    test "strict_mode: false allows global fallback via Injector", %{scope_id: scope_id} do
+      :ok = OrchidSymbiont.register("fallback_model", {MockWorker, []})
+
+      input_params = %{data: Orchid.Param.new(:data, :any, "world")}
+
+      {:ok, result} =
+        Orchid.run(
+          Orchid.Recipe.new([
+            {MyImageStep, :data, :result,
+             extra_hooks_stack: [OrchidSymbiont.Hooks.Injector],
+             symbiont_mapper: [model: "fallback_model"]}
+          ]),
+          input_params,
+          baggage: %{scope_id: scope_id, strict_mode: false}
+        )
+
+      assert "world_processed" == Orchid.Param.get_payload(result.result)
+    end
+  end
 end
